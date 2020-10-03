@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.opencensus.io/plugin/ocgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -281,7 +282,7 @@ func main() {
 	db, _ = xsuportal.GetDB()
 	db.SetMaxOpenConns(10)
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
 
 	queue := &benchmarkQueueService{}
 	report := &benchmarkReportService{}

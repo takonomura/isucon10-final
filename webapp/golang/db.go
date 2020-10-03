@@ -1,6 +1,10 @@
 package xsuportal
 
 import (
+	"database/sql"
+	"log"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
@@ -19,5 +23,43 @@ func GetDB() (*sqlx.DB, error) {
 	}
 	mysqlConfig.ParseTime = true
 
-	return sqlx.Open("mysql", mysqlConfig.FormatDSN())
+	dbx, err := sqlx.Open(tracedDriver("mysql"), mysqlConfig.FormatDSN())
+	if err != nil {
+		return dbx, err
+	}
+	initDB(dbx.DB)
+	return dbx, err
+}
+
+func initDB(db *sql.DB) {
+	waitDB(db)
+	go pollDB(db)
+
+	db.SetConnMaxLifetime(10 * time.Second)
+	db.SetMaxIdleConns(512)
+	db.SetMaxOpenConns(512)
+}
+
+func waitDB(db *sql.DB) {
+	for {
+		err := db.Ping()
+		if err == nil {
+			return
+		}
+
+		log.Printf("Failed to ping DB: %s", err)
+		log.Println("Retrying...")
+		time.Sleep(time.Second)
+	}
+}
+
+func pollDB(db *sql.DB) {
+	for {
+		err := db.Ping()
+		if err != nil {
+			log.Printf("Failed to ping DB: %s", err)
+		}
+
+		time.Sleep(time.Second)
+	}
 }
