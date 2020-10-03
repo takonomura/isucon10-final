@@ -22,6 +22,7 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.opencensus.io/trace"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	xsuportal "github.com/isucon/isucon10-final/webapp/golang"
