@@ -73,13 +73,14 @@ func MakeTestNotificationPB() *resources.Notification {
 	}
 }
 
-func InsertNotification(ctx context.Context, db sqlx.Ext, notificationPB *resources.Notification, contestantID string) (*xsuportal.Notification, error) {
+func InsertNotification(ctx context.Context, db sqlx.ExtContext, notificationPB *resources.Notification, contestantID string) (*xsuportal.Notification, error) {
 	b, err := proto.Marshal(notificationPB)
 	if err != nil {
 		return nil, fmt.Errorf("marshal notification: %w", err)
 	}
 	encodedMessage := base64.StdEncoding.EncodeToString(b)
-	res, err := db.Exec(
+	res, err := db.ExecContext(
+		CleanContext(ctx),
 		"INSERT INTO `notifications` (`contestant_id`, `encoded_message`, `read`, `created_at`, `updated_at`) VALUES (?, ?, FALSE, NOW(6), NOW(6))",
 		contestantID,
 		encodedMessage,

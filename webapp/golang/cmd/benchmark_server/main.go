@@ -126,7 +126,7 @@ func (b *benchmarkReportService) Svc() *bench.BenchmarkReportService {
 	}
 }
 
-func (b *benchmarkReportService) ReportBenchmarkResult(ctx context.Context, srv bench.BenchmarkReport_ReportBenchmarkResultServer) error {
+func (b *benchmarkReportService) ReportBenchmarkResult(srv bench.BenchmarkReport_ReportBenchmarkResultServer) error {
 	var notifier xsuportal.Notifier
 	for {
 		req, err := srv.Recv()
@@ -145,7 +145,7 @@ func (b *benchmarkReportService) ReportBenchmarkResult(ctx context.Context, srv 
 			defer tx.Rollback()
 
 			var job xsuportal.BenchmarkJob
-			err = tx.GetContext(CleanContext(ctx), &job,
+			err = tx.GetContext(CleanContext(context.TODO()), &job,
 				"SELECT * FROM `benchmark_jobs` WHERE `id` = ? AND `handle` = ? LIMIT 1 FOR UPDATE",
 				req.JobId,
 				req.Handle,
