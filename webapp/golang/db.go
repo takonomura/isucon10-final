@@ -36,8 +36,8 @@ func initDB(db *sql.DB) {
 	go pollDB(db)
 
 	db.SetConnMaxLifetime(10 * time.Second)
-	db.SetMaxIdleConns(512)
-	db.SetMaxOpenConns(512)
+	db.SetMaxIdleConns(128)
+	db.SetMaxOpenConns(128)
 }
 
 func waitDB(db *sql.DB) {
