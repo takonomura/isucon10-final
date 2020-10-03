@@ -1198,9 +1198,7 @@ func (*AudienceService) Dashboard(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("make leaderboard: %w", err)
 	}
-	return writeProto(e, http.StatusOK, &audiencepb.DashboardResponse{
-		Leaderboard: leaderboard,
-	})
+	return e.Blob(http.StatusOK, "application/vnd.google.protobuf", leaderboard)
 }
 
 type XsuportalContext struct {
