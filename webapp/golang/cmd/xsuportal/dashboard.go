@@ -81,7 +81,11 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		if team.ID == teamID || contestFinished {
 			team.FinishCount = team.RealFinishCount
 			team.BestScore = team.RealBestScore
+			team.BestScoreStartedAt = team.RealBestScoreStartedAt
+			team.BestScoreMarkedAt = team.RealBestScoreMarkedAt
 			team.LatestScore = team.RealLatestScore
+			team.LatestScoreStartedAt = team.RealLatestScoreStartedAt
+			team.LatestScoreMarkedAt = team.RealLatestScoreMarkedAt
 			leaderboard[i] = team
 		}
 	}
