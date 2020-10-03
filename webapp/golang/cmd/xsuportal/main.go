@@ -232,7 +232,7 @@ func (*AdminService) ListClarifications(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("creating get teams query: %w", err)
 	}
-	err = db.GetContext(CleanContext(e.Request().Context()), &teams, query, args...)
+	err = db.SelectContext(CleanContext(e.Request().Context()), &teams, query, args...)
 	if err != nil {
 		return fmt.Errorf("query teams: %w", err)
 	}
@@ -539,7 +539,7 @@ func (*ContestantService) ListClarifications(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("creating get teams query: %w", err)
 	}
-	err = db.GetContext(CleanContext(e.Request().Context()), &teams, query, args...)
+	err = db.SelectContext(CleanContext(e.Request().Context()), &teams, query, args...)
 	if err != nil {
 		return fmt.Errorf("query teams: %w", err)
 	}
