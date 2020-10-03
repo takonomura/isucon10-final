@@ -229,8 +229,8 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 	sets := []string{
 		"`real_finish_count` = `finish_count` + 1",
 		"`real_latest_score` = ?",
-		"`real_latest_started_at` = ?",
-		"`real_latest_marked_at` = ?",
+		"`real_latest_score_started_at` = ?",
+		"`real_latest_score_marked_at` = ?",
 	}
 	setArgs := []interface{}{
 		score,
@@ -241,8 +241,8 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 		sets = append(sets,
 			"`finish_count` = `finish_count` + 1",
 			"`latest_score` = ?",
-			"`latest_started_at` = ?",
-			"`latest_marked_at` = ?",
+			"`latest_score_started_at` = ?",
+			"`latest_score_marked_at` = ?",
 		)
 		setArgs = append(setArgs,
 			score,
@@ -254,8 +254,8 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 	if team.BestScore.Int64 <= int64(score) {
 		sets = append(sets,
 			"real_best_score = ?",
-			"real_best_started_at = ?",
-			"real_best_marked_at = ?",
+			"real_best_score_started_at = ?",
+			"real_best_score_marked_at = ?",
 		)
 		setArgs = append(setArgs,
 			score,
@@ -265,8 +265,8 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 		if cs.ContestFreezesAt.After(markedAt) {
 			sets = append(sets,
 				"best_score = ?",
-				"best_started_at = ?",
-				"best_marked_at = ?",
+				"best_score_started_at = ?",
+				"best_score_marked_at = ?",
 			)
 			setArgs = append(setArgs,
 				score,
