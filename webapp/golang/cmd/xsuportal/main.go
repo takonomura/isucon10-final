@@ -1187,7 +1187,7 @@ func getCurrentTeam(e echo.Context, db sqlx.QueryerContext, lock bool) (*xsuport
 		return nil, nil
 	}
 	var team xsuportal.Team
-	query := "SELECT * FROM `teams` WHERE `id` = ? LIMIT 1"
+	query := "SELECT id, name, leader_id, email_address, invite_token, withdrawn, created_at FROM `teams` WHERE `id` = ? LIMIT 1"
 	if lock {
 		query += " FOR UPDATE"
 	}
