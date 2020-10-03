@@ -618,10 +618,13 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 
 	afterStr := e.QueryParam("after")
 
+	_, span := trace.StartSpan(e.Request().Context(), "Tx.Begin")
 	tx, err := db.Beginx()
 	if err != nil {
+		span.End()
 		return fmt.Errorf("begin tx: %w", err)
 	}
+	span.End()
 	defer tx.Rollback()
 	contestant, _ := getCurrentContestant(e, tx, false)
 
