@@ -8,19 +8,21 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	xsuportal "github.com/isucon/isucon10-final/webapp/golang"
 	resourcespb "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/resources"
+	audiencepb "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/audience"
 )
 
 var (
 	lbCacheMutex  = new(sync.Mutex)
 	lbCacheExpire time.Time
-	lbCacheData   *resourcespb.Leaderboard
+	lbCacheData   []byte
 )
 
-func getCachedLeaderboard(e echo.Context) (*resourcespb.Leaderboard, error) {
+func getCachedLeaderboard(e echo.Context) ([]byte, error) {
 	now := time.Now()
 	lbCacheMutex.Lock()
 	defer lbCacheMutex.Unlock()
@@ -29,11 +31,14 @@ func getCachedLeaderboard(e echo.Context) (*resourcespb.Leaderboard, error) {
 	}
 	var err error
 	lbCacheExpire = time.Now().Add(time.Second)
-	lbCacheData, err = makeLeaderboardPB(e, 0)
+	pb, err := makeLeaderboardPB(e, 0)
 	if err != nil {
 		lbCacheExpire = time.Time{}
 		return nil, err
 	}
+	lbCacheData, _ = proto.Marshal(&audiencepb.DashboardResponse{
+		Leaderboard: pb,
+	})
 	return lbCacheData, nil
 }
 
