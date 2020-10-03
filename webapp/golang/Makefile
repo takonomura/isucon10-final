@@ -1,4 +1,4 @@
-PREFIX=$(PWD)
+PREFIX=/home/isucon/webapp/golang
 BINDIR=$(PREFIX)/bin
 
 COMPILER=go
