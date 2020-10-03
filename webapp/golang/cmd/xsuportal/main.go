@@ -23,7 +23,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"go.opencensus.io/trace"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	xsuportal "github.com/isucon/isucon10-final/webapp/golang"
@@ -50,12 +49,13 @@ var db *sqlx.DB
 var notifier xsuportal.Notifier
 
 func CleanContext(ctx context.Context) context.Context {
-	return trace.NewContext(context.Background(), trace.FromContext(ctx))
+	return context.Background()
+	//return trace.NewContext(context.Background(), trace.FromContext(ctx))
 }
 
 func main() {
-	xsuportal.InitProfiler("web")
-	xsuportal.InitTrace()
+	//xsuportal.InitProfiler("web")
+	//xsuportal.InitTrace()
 
 	srv := echo.New()
 	srv.Debug = util.GetEnv("DEBUG", "") != ""
@@ -72,7 +72,6 @@ func main() {
 
 	db, _ = xsuportal.GetDB()
 
-	srv.Use(echo.WrapMiddleware(xsuportal.WithTrace))
 	srv.Use(middleware.Recover())
 	srv.Use(session.Middleware(sessions.NewCookieStore([]byte("tagomoris"))))
 
@@ -660,13 +659,10 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 
 	afterStr := e.QueryParam("after")
 
-	_, span := trace.StartSpan(e.Request().Context(), "Tx.Begin")
 	tx, err := db.Beginx()
 	if err != nil {
-		span.End()
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	span.End()
 	defer tx.Rollback()
 	contestant, _ := getCurrentContestant(e, tx, false)
 

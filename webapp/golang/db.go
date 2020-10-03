@@ -23,7 +23,7 @@ func GetDB() (*sqlx.DB, error) {
 	}
 	mysqlConfig.ParseTime = true
 
-	dbx, err := sqlx.Open(tracedDriver("mysql"), mysqlConfig.FormatDSN())
+	dbx, err := sqlx.Open("mysql", mysqlConfig.FormatDSN())
 	if err != nil {
 		return dbx, err
 	}
