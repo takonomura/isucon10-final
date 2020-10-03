@@ -57,18 +57,18 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `teams`.`withdrawn` AS `withdrawn`,\n" +
 		"  `teams`.`student` AS `student`,\n" +
 		"  `teams`.`best_score` AS `best_score`,\n" +
-		"  `teams`.`best_started_at` AS `best_score_started_at`,\n" +
-		"  `teams`.`best_marked_at` AS `best_score_marked_at`,\n" +
+		"  `teams`.`best_score_started_at` AS `best_score_started_at`,\n" +
+		"  `teams`.`best_score_marked_at` AS `best_score_marked_at`,\n" +
 		"  `teams`.`latest_score` AS `latest_score`,\n" +
-		"  `teams`.`latest_started_at` AS `latest_score_started_at`,\n" +
-		"  `teams`.`latest_marked_at` AS `latest_score_marked_at`,\n" +
+		"  `teams`.`latest_score_started_at` AS `latest_score_started_at`,\n" +
+		"  `teams`.`latest_score_marked_at` AS `latest_score_marked_at`,\n" +
 		"  `teams`.`finish_count` AS `finish_count`,\n" +
 		"  `teams`.`real_best_score` AS `real_best_score`,\n" +
-		"  `teams`.`real_best_started_at` AS `real_best_score_started_at`,\n" +
-		"  `teams`.`real_best_marked_at` AS `real_best_score_marked_at`,\n" +
+		"  `teams`.`real_best_score_started_at` AS `real_best_score_started_at`,\n" +
+		"  `teams`.`real_best_score_marked_at` AS `real_best_score_marked_at`,\n" +
 		"  `teams`.`real_latest_score` AS `real_latest_score`,\n" +
-		"  `teams`.`real_latest_started_at` AS `real_latest_score_started_at`,\n" +
-		"  `teams`.`real_latest_marked_at` AS `real_latest_score_marked_at`,\n" +
+		"  `teams`.`real_latest_score_started_at` AS `real_latest_score_started_at`,\n" +
+		"  `teams`.`real_latest_score_marked_at` AS `real_latest_score_marked_at`,\n" +
 		"  `teams`.`real_finish_count` AS `real_finish_count`\n" +
 		"FROM\n" +
 		"  `teams`\n" +
