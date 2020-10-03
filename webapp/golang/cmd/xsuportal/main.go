@@ -48,7 +48,7 @@ var db *sqlx.DB
 var notifier xsuportal.Notifier
 
 func CleanContext(ctx context.Context) context.Context {
-	return context.Background()
+	return trace.NewContext(context.Background(), trace.FromContext(ctx))
 }
 
 func main() {
