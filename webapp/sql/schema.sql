@@ -19,6 +19,7 @@ CREATE TABLE `teams` (
   `withdrawn` TINYINT(1) DEFAULT FALSE,
   `created_at` DATETIME(6) NOT NULL,
   `last_clar_id` BIGINT  NOT NULL DEFAULT 0,
+  `student` TINYINT(1) DEFAULT FALSE,
   UNIQUE KEY (`leader_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4;
 

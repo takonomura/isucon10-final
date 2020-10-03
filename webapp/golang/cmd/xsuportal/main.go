@@ -973,8 +973,9 @@ func (*RegistrationService) CreateTeam(e echo.Context) error {
 
 	_, err = conn.ExecContext(
 		ctx,
-		"UPDATE `teams` SET `leader_id` = ? WHERE `id` = ? LIMIT 1",
+		"UPDATE `teams` SET `leader_id` = ?, `student` = ? WHERE `id` = ? LIMIT 1",
 		contestant.ID,
+		req.IsStudent,
 		teamID,
 	)
 	if err != nil {
@@ -1015,15 +1016,15 @@ func (*RegistrationService) JoinTeam(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("get team with lock: %w", err)
 	}
-	var memberCount int
-	err = tx.GetContext(CleanContext(e.Request().Context()), &memberCount,
-		"SELECT COUNT(*) AS `cnt` FROM `contestants` WHERE `team_id` = ?",
+	var members []xsuportal.Contestant
+	err = tx.SelectContext(CleanContext(e.Request().Context()), &members,
+		"SELECT * FROM `contestants` WHERE `team_id` = ?",
 		req.TeamId,
 	)
 	if err != nil {
 		return fmt.Errorf("count team member: %w", err)
 	}
-	if memberCount >= 3 {
+	if len(members) >= 3 {
 		return halt(e, http.StatusBadRequest, "チーム人数の上限に達しています", nil)
 	}
 
@@ -1033,6 +1034,19 @@ func (*RegistrationService) JoinTeam(e echo.Context) error {
 		req.Name,
 		req.IsStudent,
 		contestant.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("update contestant: %w", err)
+	}
+	isStudent := req.IsStudent
+	for _, c := range members {
+		if !c.Student {
+			isStudent = false
+		}
+	}
+	_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `student` = ? WHERE `id` = ? LIMIT 1",
+		isStudent,
+		req.TeamId,
 	)
 	if err != nil {
 		return fmt.Errorf("update contestant: %w", err)
@@ -1075,6 +1089,29 @@ func (*RegistrationService) UpdateRegistration(e echo.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf("update contestant: %w", err)
+	}
+	if team.LeaderID.Valid {
+		var members []xsuportal.Contestant
+		err = tx.SelectContext(CleanContext(e.Request().Context()), &members,
+			"SELECT * FROM `contestants` WHERE `team_id` = ?",
+			contestant.TeamID,
+		)
+		if err != nil {
+			return fmt.Errorf("count team member: %w", err)
+		}
+		isStudent := req.IsStudent
+		for _, c := range members {
+			if !c.Student {
+				isStudent = false
+			}
+		}
+		_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `student` = ? WHERE `id` = ? LIMIT 1",
+			isStudent,
+			contestant.TeamID,
+		)
+		if err != nil {
+			return fmt.Errorf("update contestant: %w", err)
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
