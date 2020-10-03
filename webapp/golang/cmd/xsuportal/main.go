@@ -70,7 +70,6 @@ func main() {
 	}
 
 	db, _ = xsuportal.GetDB()
-	db.SetMaxOpenConns(10)
 
 	srv.Use(echo.WrapMiddleware(xsuportal.WithTrace))
 	srv.Use(middleware.Recover())
