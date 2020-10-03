@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/x509"
@@ -32,7 +33,7 @@ const (
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("send_web_push: ")
-	if err := run(); err != nil {
+	if err := run(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -68,7 +69,7 @@ func MakeTestNotificationPB() *resources.Notification {
 	}
 }
 
-func InsertNotification(db sqlx.Ext, notificationPB *resources.Notification, contestantID string) (*xsuportal.Notification, error) {
+func InsertNotification(ctx context.Context, db sqlx.Ext, notificationPB *resources.Notification, contestantID string) (*xsuportal.Notification, error) {
 	b, err := proto.Marshal(notificationPB)
 	if err != nil {
 		return nil, fmt.Errorf("marshal notification: %w", err)
@@ -84,8 +85,7 @@ func InsertNotification(db sqlx.Ext, notificationPB *resources.Notification, con
 	}
 	id, _ := res.LastInsertId()
 	var notification xsuportal.Notification
-	err = sqlx.Get(
-		db,
+	err = sqlx.GetContext(CleanContext(ctx), db,
 		&notification,
 		"SELECT * FROM `notifications` WHERE `id` = ?",
 		id,
@@ -96,10 +96,9 @@ func InsertNotification(db sqlx.Ext, notificationPB *resources.Notification, con
 	return &notification, nil
 }
 
-func GetPushSubscriptions(db sqlx.Queryer, contestantID string) ([]xsuportal.PushSubscription, error) {
+func GetPushSubscriptions(ctx context.Context, db sqlx.QueryerContext, contestantID string) ([]xsuportal.PushSubscription, error) {
 	var subscriptions []xsuportal.PushSubscription
-	err := sqlx.Select(
-		db,
+	err := sqlx.SelectContext(CleanContext(ctx), db,
 		&subscriptions,
 		"SELECT * FROM `push_subscriptions` WHERE `contestant_id` = ?",
 		contestantID,
@@ -151,7 +150,7 @@ func SendWebPush(vapidKey *ecdsa.PrivateKey, notificationPB *resources.Notificat
 	return nil
 }
 
-func run() error {
+func run(ctx context.Context) error {
 	rand.Seed(time.Now().Unix())
 	var flags struct {
 		contestantID        string
@@ -177,7 +176,7 @@ func run() error {
 	}
 	defer db.Close()
 
-	subscriptions, err := GetPushSubscriptions(db, flags.contestantID)
+	subscriptions, err := GetPushSubscriptions(ctx, db, flags.contestantID)
 	if err != nil {
 		return fmt.Errorf("get push subscrptions: %w", err)
 	}
@@ -186,7 +185,7 @@ func run() error {
 	}
 
 	notificationPB := MakeTestNotificationPB()
-	notification, err := InsertNotification(db, notificationPB, flags.contestantID)
+	notification, err := InsertNotification(ctx, db, notificationPB, flags.contestantID)
 	if err != nil {
 		return fmt.Errorf("insert notification: %w", err)
 	}

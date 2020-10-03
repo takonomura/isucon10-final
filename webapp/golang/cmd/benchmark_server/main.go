@@ -43,7 +43,7 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 			}
 			defer tx.Rollback()
 
-			job, err := pollBenchmarkJob(tx)
+			job, err := pollBenchmarkJob(ctx, tx)
 			if err != nil {
 				return false, fmt.Errorf("poll benchmark job: %w", err)
 			}
@@ -52,8 +52,7 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 			}
 
 			var gotLock bool
-			err = tx.Get(
-				&gotLock,
+			err = tx.GetContext(CleanContext(ctx), &gotLock,
 				"SELECT 1 FROM `benchmark_jobs` WHERE `id` = ? AND `status` = ? FOR UPDATE",
 				job.ID,
 				resources.BenchmarkJob_PENDING,
@@ -70,8 +69,7 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 				return false, fmt.Errorf("read random: %w", err)
 			}
 			handle := base64.StdEncoding.EncodeToString(randomBytes)
-			_, err = tx.Exec(
-				"UPDATE `benchmark_jobs` SET `status` = ?, `handle` = ? WHERE `id` = ? AND `status` = ? LIMIT 1",
+			_, err = tx.ExecContext(CleanContext(ctx), "UPDATE `benchmark_jobs` SET `status` = ?, `handle` = ? WHERE `id` = ? AND `status` = ? LIMIT 1",
 				resources.BenchmarkJob_SENT,
 				handle,
 				job.ID,
@@ -82,7 +80,7 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 			}
 
 			var contestStartsAt time.Time
-			err = tx.Get(&contestStartsAt, "SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
+			err = tx.GetContext(CleanContext(ctx), &contestStartsAt, "SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
 			if err != nil {
 				return false, fmt.Errorf("get contest starts at: %w", err)
 			}
@@ -124,7 +122,7 @@ func (b *benchmarkReportService) Svc() *bench.BenchmarkReportService {
 	}
 }
 
-func (b *benchmarkReportService) ReportBenchmarkResult(srv bench.BenchmarkReport_ReportBenchmarkResultServer) error {
+func (b *benchmarkReportService) ReportBenchmarkResult(ctx context.Context, srv bench.BenchmarkReport_ReportBenchmarkResultServer) error {
 	var notifier xsuportal.Notifier
 	for {
 		req, err := srv.Recv()
@@ -143,8 +141,7 @@ func (b *benchmarkReportService) ReportBenchmarkResult(srv bench.BenchmarkReport
 			defer tx.Rollback()
 
 			var job xsuportal.BenchmarkJob
-			err = tx.Get(
-				&job,
+			err = tx.GetContext(CleanContext(ctx), &job,
 				"SELECT * FROM `benchmark_jobs` WHERE `id` = ? AND `handle` = ? LIMIT 1 FOR UPDATE",
 				req.JobId,
 				req.Handle,
@@ -245,14 +242,13 @@ func (b *benchmarkReportService) saveAsRunning(db sqlx.Execer, job *xsuportal.Be
 	return nil
 }
 
-func pollBenchmarkJob(db sqlx.Queryer) (*xsuportal.BenchmarkJob, error) {
+func pollBenchmarkJob(ctx context.Context, db sqlx.QueryerContext) (*xsuportal.BenchmarkJob, error) {
 	for i := 0; i < 10; i++ {
 		if i >= 1 {
 			time.Sleep(50 * time.Millisecond)
 		}
 		var job xsuportal.BenchmarkJob
-		err := sqlx.Get(
-			db,
+		err := sqlx.GetContext(CleanContext(ctx), db,
 			&job,
 			"SELECT * FROM `benchmark_jobs` WHERE `status` = ? ORDER BY `id` LIMIT 1",
 			resources.BenchmarkJob_PENDING,
