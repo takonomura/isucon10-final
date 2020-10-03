@@ -9,6 +9,8 @@ CREATE TABLE `contestants` (
   `created_at` DATETIME(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
 
+ALTER TABLE `contestants` ADD INDEX idx1 (`team_id`);
+
 DROP TABLE IF EXISTS `teams`;
 CREATE TABLE `teams` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
