@@ -301,7 +301,7 @@ func (*AdminService) GetClarification(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("get team: %w", err)
 	}
-	c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &team)
+	c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &team, nil)
 	if err != nil {
 		return fmt.Errorf("make clarification: %w", err)
 	}
@@ -371,7 +371,7 @@ func (*AdminService) RespondClarification(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("get team: %w", err)
 	}
-	c, err := makeClarificationPB(e.Request().Context(), tx, &clarification, &team)
+	c, err := makeClarificationPB(e.Request().Context(), tx, &clarification, &team, nil)
 	if err != nil {
 		return fmt.Errorf("make clarification: %w", err)
 	}
@@ -630,7 +630,7 @@ func (*ContestantService) RequestClarification(e echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
 	}
-	c, err := makeClarificationPB(e.Request().Context(), db, &clarification, team)
+	c, err := makeClarificationPB(e.Request().Context(), db, &clarification, team, nil)
 	if err != nil {
 		return fmt.Errorf("make clarification: %w", err)
 	}
@@ -1404,17 +1404,19 @@ func halt(e echo.Context, code int, humanMessage string, err error) error {
 }
 
 func makeClarificationPB(ctx context.Context, db sqlx.QueryerContext, c *xsuportal.Clarification, t *xsuportal.Team, cs []xsuportal.Contestant) (*resourcespb.Clarification, error) {
-	team, err := makeTeamPB(ctx, db, t, false, false)
+	team, err := makeTeamPB(ctx, db, t, false, cs == nil)
 	if err != nil {
 		return nil, fmt.Errorf("make team: %w", err)
 	}
-	for _, m := range cs {
-		m := m
-		if m.ID == team.LeaderId {
-			team.Leader = makeContestantPB(&m)
+	if cs != nil {
+		for _, m := range cs {
+			m := m
+			if m.ID == team.LeaderId {
+				team.Leader = makeContestantPB(&m)
+			}
+			team.Members = append(team.Members, makeContestantPB(&m))
+			team.MemberIds = append(team.MemberIds, m.ID)
 		}
-		team.Members = append(team.Members, makeContestantPB(&m))
-		team.MemberIds = append(team.MemberIds, m.ID)
 	}
 	pb := &resourcespb.Clarification{
 		Id:        c.ID,
