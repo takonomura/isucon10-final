@@ -227,7 +227,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 	}
 	score := raw.Int32 - deduction.Int32
 	sets := []string{
-		"`real_finish_count` = `finish_count` + 1",
+		"`real_finish_count` = `real_finish_count` + 1",
 		"`real_latest_score` = ?",
 		"`real_latest_score_started_at` = ?",
 		"`real_latest_score_marked_at` = ?",
