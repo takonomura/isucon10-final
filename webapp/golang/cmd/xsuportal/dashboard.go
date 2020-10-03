@@ -69,7 +69,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `teams`.`real_latest_score` AS `real_latest_score`,\n" +
 		"  `teams`.`real_latest_started_at` AS `real_latest_score_started_at`,\n" +
 		"  `teams`.`real_latest_marked_at` AS `real_latest_score_marked_at`,\n" +
-		"  `teams`.`real_finish_count` AS `real_finish_count`,\n" +
+		"  `teams`.`real_finish_count` AS `real_finish_count`\n" +
 		"FROM\n" +
 		"  `teams`\n" +
 		"ORDER BY\n" +

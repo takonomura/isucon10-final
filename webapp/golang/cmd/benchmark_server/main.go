@@ -234,7 +234,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 	}
 	setArgs := []interface{}{
 		score,
-		job.StartedAt.Value,
+		job.StartedAt.Time,
 		markedAt,
 	}
 	if cs.ContestFreezesAt.After(markedAt) {
@@ -246,7 +246,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 		)
 		setArgs = append(setArgs,
 			score,
-			job.StartedAt.Value,
+			job.StartedAt.Time,
 			markedAt,
 		)
 	}
@@ -259,7 +259,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 		)
 		setArgs = append(setArgs,
 			score,
-			job.StartedAt.Value,
+			job.StartedAt.Time,
 			markedAt,
 		)
 		if cs.ContestFreezesAt.After(markedAt) {
