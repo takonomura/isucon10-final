@@ -26,14 +26,14 @@ CREATE TABLE `teams` (
   `latest_score` INT,
   `latest_score_started_at` DATETIME(6),
   `latest_score_marked_at` DATETIME(6),
-  `finish_count` INT,
+  `finish_count` INT DEFAULT 0,
   `real_best_score` INT,
   `real_best_score_started_at` DATETIME(6),
   `real_best_score_marked_at` DATETIME(6),
   `real_latest_score` INT,
   `real_latest_score_started_at` DATETIME(6),
   `real_latest_score_marked_at` DATETIME(6),
-  `real_finish_count` INT,
+  `real_finish_count` INT DEFAULT 0,
   UNIQUE KEY (`leader_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4;
 
