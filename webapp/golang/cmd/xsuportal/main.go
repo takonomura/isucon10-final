@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	TeamCapacity               = 150
+	TeamCapacity               = 120
 	AdminID                    = "admin"
 	AdminPassword              = "admin"
 	DebugContestStatusFilePath = "/tmp/XSUPORTAL_CONTEST_STATUS"
@@ -71,7 +71,6 @@ func main() {
 	}
 
 	db, _ = xsuportal.GetDB()
-	db.SetMaxOpenConns(256)
 
 	srv.Use(middleware.Recover())
 	srv.Use(session.Middleware(sessions.NewCookieStore([]byte("tagomoris"))))
