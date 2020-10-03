@@ -217,20 +217,33 @@ func (*AdminService) ListClarifications(e echo.Context) error {
 		return fmt.Errorf("query clarifications: %w", err)
 	}
 	res := &adminpb.ListClarificationsResponse{}
+	var teamIDs []int64
+	teamIDuniq := make(map[int64]struct{})
 	for _, clarification := range clarifications {
-		var team xsuportal.Team
-		err := db.GetContext(CleanContext(e.Request().Context()), &team,
-			"SELECT * FROM `teams` WHERE `id` = ? LIMIT 1",
-			clarification.TeamID,
-		)
-		if err != nil {
-			return fmt.Errorf("query team(id=%v, clarification=%v): %w", clarification.TeamID, clarification.ID, err)
+		if _, ok := teamIDuniq[clarification.TeamID]; !ok {
+			teamIDs = append(teamIDs, clarification.TeamID)
 		}
-		c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &team)
-		if err != nil {
-			return fmt.Errorf("make clarification: %w", err)
+	}
+	var teams []xsuportal.Team
+	query, args, err := sqlx.In("SELECT * FROM `teams` WHERE `id` IN (?)", teamIDs)
+	if err != nil {
+		return fmt.Errorf("creating get teams query: %w", err)
+	}
+	err = db.GetContext(CleanContext(e.Request().Context()), &teams, query, args...)
+	if err != nil {
+		return fmt.Errorf("query teams: %w", err)
+	}
+	for _, clarification := range clarifications {
+		for _, t := range teams {
+			if t.ID == clarification.TeamID {
+				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t)
+				if err != nil {
+					return fmt.Errorf("make clarification: %w", err)
+				}
+				res.Clarifications = append(res.Clarifications, c)
+				break
+			}
 		}
-		res.Clarifications = append(res.Clarifications, c)
 	}
 	return writeProto(e, http.StatusOK, res)
 }
@@ -508,20 +521,33 @@ func (*ContestantService) ListClarifications(e echo.Context) error {
 		return fmt.Errorf("select clarifications: %w", err)
 	}
 	res := &contestantpb.ListClarificationsResponse{}
+	var teamIDs []int64
+	teamIDuniq := make(map[int64]struct{})
 	for _, clarification := range clarifications {
-		var team xsuportal.Team
-		err := db.GetContext(CleanContext(e.Request().Context()), &team,
-			"SELECT * FROM `teams` WHERE `id` = ? LIMIT 1",
-			clarification.TeamID,
-		)
-		if err != nil {
-			return fmt.Errorf("get team(id=%v): %w", clarification.TeamID, err)
+		if _, ok := teamIDuniq[clarification.TeamID]; !ok {
+			teamIDs = append(teamIDs, clarification.TeamID)
 		}
-		c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &team)
-		if err != nil {
-			return fmt.Errorf("make clarification: %w", err)
+	}
+	var teams []xsuportal.Team
+	query, args, err := sqlx.In("SELECT * FROM `teams` WHERE `id` IN (?)", teamIDs)
+	if err != nil {
+		return fmt.Errorf("creating get teams query: %w", err)
+	}
+	err = db.GetContext(CleanContext(e.Request().Context()), &teams, query, args...)
+	if err != nil {
+		return fmt.Errorf("query teams: %w", err)
+	}
+	for _, clarification := range clarifications {
+		for _, t := range teams {
+			if t.ID == clarification.TeamID {
+				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t)
+				if err != nil {
+					return fmt.Errorf("make clarification: %w", err)
+				}
+				res.Clarifications = append(res.Clarifications, c)
+				break
+			}
 		}
-		res.Clarifications = append(res.Clarifications, c)
 	}
 	return writeProto(e, http.StatusOK, res)
 }
