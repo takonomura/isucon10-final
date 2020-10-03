@@ -337,30 +337,10 @@ func (*AdminService) RespondClarification(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("make clarification: %w", err)
 	}
-	updated := wasAnswered && wasDisclosed == clarification.Disclosed
-	if !updated {
-		if clarification.Disclosed.Bool {
-			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ?, WHERE `last_clar_id` < ?",
-				id,
-				id,
-			)
-			if err != nil {
-				return fmt.Errorf("update last_clar_id: %w", err)
-			}
-		} else {
-			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ?, WHERE `id` = ? AND `last_clar_id` < ?",
-				id,
-				team.ID,
-				id,
-			)
-			if err != nil {
-				return fmt.Errorf("update last_clar_id: %w", err)
-			}
-		}
-	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
 	}
+	updated := wasAnswered && wasDisclosed == clarification.Disclosed
 	if err := notifier.NotifyClarificationAnswered(db, &clarification, updated); err != nil {
 		return fmt.Errorf("notify clarification answered: %w", err)
 	}
@@ -626,21 +606,21 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 	}
 	team, _ := getCurrentTeam(e, db, false)
 
-	//var lastAnsweredClarificationID int64
-	//err = db.GetContext(CleanContext(e.Request().Context()), &lastAnsweredClarificationID,
-	//        "SELECT `id` FROM `clarifications` WHERE (`team_id` = ? OR `disclosed` = TRUE) AND `answered_at` IS NOT NULL ORDER BY `id` DESC LIMIT 1",
-	//        team.ID,
-	//)
-	//if err != sql.ErrNoRows && err != nil {
-	//        return fmt.Errorf("get last answered clarification: %w", err)
-	//}
+	var lastAnsweredClarificationID int64
+	err = db.GetContext(CleanContext(e.Request().Context()), &lastAnsweredClarificationID,
+		"SELECT `id` FROM `clarifications` WHERE (`team_id` = ? OR `disclosed` = TRUE) AND `answered_at` IS NOT NULL ORDER BY `id` DESC LIMIT 1",
+		team.ID,
+	)
+	if err != sql.ErrNoRows && err != nil {
+		return fmt.Errorf("get last answered clarification: %w", err)
+	}
 	ns, err := makeNotificationsPB(notifications)
 	if err != nil {
 		return fmt.Errorf("make notifications: %w", err)
 	}
 	return writeProto(e, http.StatusOK, &contestantpb.ListNotificationsResponse{
 		Notifications:               ns,
-		LastAnsweredClarificationId: team.LastClarID,
+		LastAnsweredClarificationId: lastAnsweredClarificationID,
 	})
 }
 
