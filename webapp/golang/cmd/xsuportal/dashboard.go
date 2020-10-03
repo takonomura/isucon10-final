@@ -20,9 +20,10 @@ var (
 )
 
 func getCachedLeaderboard(e echo.Context) (*resourcespb.Leaderboard, error) {
+	now := time.Now()
 	lbCacheMutex.Lock()
 	defer lbCacheMutex.Unlock()
-	if !lbCacheExpire.IsZero() && lbCacheExpire.After(time.Now()) {
+	if !lbCacheExpire.IsZero() && lbCacheExpire.After(now) {
 		return lbCacheData, nil
 	}
 	var err error
