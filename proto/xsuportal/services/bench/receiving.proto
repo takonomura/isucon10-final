@@ -1,0 +1,29 @@
+syntax = "proto3";
+package xsuportal.proto.services.bench;
+option go_package = "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/bench";
+
+import "google/protobuf/timestamp.proto";
+
+service BenchmarkQueue {
+  rpc ReceiveBenchmarkJob(ReceiveBenchmarkJobRequest)
+      returns (ReceiveBenchmarkJobResponse);
+}
+
+message ReceiveBenchmarkJobRequest {
+  // string token = 1;
+  // string instance_name = 2;
+  int64 team_id = 3;
+}
+
+message ReceiveBenchmarkJobResponse {
+  message JobHandle {
+    int64 job_id = 1;
+    string handle = 2;
+    string target_hostname = 3;
+    // string description_human = 4;
+    google.protobuf.Timestamp contest_started_at = 10;
+    google.protobuf.Timestamp job_created_at = 11;
+  }
+  // optional
+  JobHandle job_handle = 1;
+}

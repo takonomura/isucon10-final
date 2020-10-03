@@ -1,0 +1,28 @@
+syntax = "proto3";
+package xsuportal.proto.resources;
+option go_package = "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/resources";
+
+import "xsuportal/resources/contestant.proto";
+
+message Team {
+  int64 id = 1;
+  string name = 2;
+  string leader_id = 3;
+  repeated string member_ids = 4;
+  bool withdrawn = 7;
+
+  message StudentStatus {
+    bool status = 1;
+  }
+  StudentStatus student = 10;
+
+  message TeamDetail {
+    string email_address = 1;
+
+    string invite_token = 16;
+  }
+  TeamDetail detail = 8;
+
+  Contestant leader = 16;
+  repeated Contestant members = 17;
+}

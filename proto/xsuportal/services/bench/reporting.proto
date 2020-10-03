@@ -1,0 +1,19 @@
+syntax = "proto3";
+package xsuportal.proto.services.bench;
+option go_package = "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/bench";
+
+import "xsuportal/resources/benchmark_result.proto";
+
+service BenchmarkReport {
+  rpc ReportBenchmarkResult(stream ReportBenchmarkResultRequest)
+      returns (stream ReportBenchmarkResultResponse);
+}
+
+message ReportBenchmarkResultRequest {
+  int64 job_id = 1;
+  string handle = 2;
+  int64 nonce = 3;
+  xsuportal.proto.resources.BenchmarkResult result = 4;
+}
+
+message ReportBenchmarkResultResponse { int64 acked_nonce = 1; }

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package xsuportal.proto.services.admin;
+option go_package = "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/admin";
+
+import "xsuportal/resources/contest.proto";
+
+message InitializeRequest { xsuportal.proto.resources.Contest contest = 1; }
+
+message InitializeResponse {
+  message BenchmarkServer {
+    string host = 1;
+    int64 port = 2;
+  }
+  // 実装言語
+  string language = 1;
+  // 実ベンチマーカーに伝える仮想ベンチマークサーバー(gRPC)のホスト情報
+  BenchmarkServer benchmark_server = 2;
+}

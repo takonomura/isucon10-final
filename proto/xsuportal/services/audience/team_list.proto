@@ -1,0 +1,13 @@
+syntax = "proto3";
+package xsuportal.proto.services.audience;
+option go_package = "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/audience";
+
+message ListTeamsResponse {
+  repeated TeamListItem teams = 1;
+  message TeamListItem {
+    int64 team_id = 1;
+    string name = 2;
+    repeated string member_names = 3;
+    bool is_student = 5;
+  }
+}
