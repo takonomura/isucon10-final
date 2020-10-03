@@ -221,7 +221,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 	}
 	//if cs.ContestFreezesAt.After(markedAt) {
 	var team xsuportal.Team
-	err = db.Get(&team, "SELECT * FROM `teams` WHERE id = ? LIMIT 1", job.TeamID)
+	err = db.Get(&team, "SELECT * FROM `teams` WHERE id = ? LIMIT 1 FOR UPDATE", job.TeamID)
 	if err != nil {
 		return fmt.Errorf("querying team: %w", err)
 	}
