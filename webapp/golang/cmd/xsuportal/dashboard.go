@@ -88,7 +88,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 
 	sort.Slice(leaderboard, func(i, j int) bool {
 		if leaderboard[i].LatestScore.Int64 == leaderboard[j].LatestScore.Int64 {
-			return leaderboard[i].LatestScoreMarkedAt.Time.After(leaderboard[j].LatestScoreMarkedAt.Time)
+			return leaderboard[i].LatestScoreMarkedAt.Time.Before(leaderboard[j].LatestScoreMarkedAt.Time)
 		}
 		return leaderboard[i].LatestScore.Int64 > leaderboard[j].LatestScore.Int64
 	})
