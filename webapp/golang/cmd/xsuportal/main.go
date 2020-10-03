@@ -71,6 +71,7 @@ func main() {
 	}
 
 	db, _ = xsuportal.GetDB()
+	db.SetMaxOpenConns(256)
 
 	srv.Use(middleware.Recover())
 	srv.Use(session.Middleware(sessions.NewCookieStore([]byte("tagomoris"))))
