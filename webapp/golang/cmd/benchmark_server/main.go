@@ -270,7 +270,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 			)
 			setArgs = append(setArgs,
 				score,
-				job.StartedAt.Value,
+				job.StartedAt.Time,
 				markedAt,
 			)
 		}
