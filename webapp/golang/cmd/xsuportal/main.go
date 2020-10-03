@@ -340,7 +340,7 @@ func (*AdminService) RespondClarification(e echo.Context) error {
 	updated := wasAnswered && wasDisclosed == clarification.Disclosed
 	if !updated {
 		if clarification.Disclosed.Bool {
-			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ?, WHERE `last_clar_id` < ?",
+			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ? WHERE `last_clar_id` < ?",
 				id,
 				id,
 			)
@@ -348,7 +348,7 @@ func (*AdminService) RespondClarification(e echo.Context) error {
 				return fmt.Errorf("update last_clar_id: %w", err)
 			}
 		} else {
-			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ?, WHERE `id` = ? AND `last_clar_id` < ?",
+			_, err = tx.ExecContext(CleanContext(e.Request().Context()), "UPDATE `teams` SET `last_clar_id` = ? WHERE `id` = ? AND `last_clar_id` < ?",
 				id,
 				team.ID,
 				id,
