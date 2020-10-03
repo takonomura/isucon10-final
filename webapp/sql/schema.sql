@@ -20,6 +20,20 @@ CREATE TABLE `teams` (
   `created_at` DATETIME(6) NOT NULL,
   `last_clar_id` BIGINT  NOT NULL DEFAULT 0,
   `student` TINYINT(1) DEFAULT FALSE,
+  `best_score` INT,
+  `best_score_started_at` DATETIME(6),
+  `best_score_marked_at` DATETIME(6),
+  `latest_score` INT,
+  `latest_score_started_at` DATETIME(6),
+  `latest_score_marked_at` DATETIME(6),
+  `finish_count` INT,
+  `real_best_score` INT,
+  `real_best_score_started_at` DATETIME(6),
+  `real_best_score_marked_at` DATETIME(6),
+  `real_latest_score` INT,
+  `real_latest_score_started_at` DATETIME(6),
+  `real_latest_score_marked_at` DATETIME(6),
+  `real_finish_count` INT,
   UNIQUE KEY (`leader_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4;
 

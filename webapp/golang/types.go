@@ -18,16 +18,30 @@ type Contestant struct {
 }
 
 type Team struct {
-	ID           int64          `db:"id"`
-	Name         string         `db:"name"`
-	LeaderID     sql.NullString `db:"leader_id"`
-	EmailAddress string         `db:"email_address"`
-	InviteToken  string         `db:"invite_token"`
-	Withdrawn    bool           `db:"withdrawn"`
-	CreatedAt    time.Time      `db:"created_at"`
-	LastClarID   int64          `db:"last_clar_id"`
-	Student      sql.NullBool   `db:"-"`
-	StudentVoid  sql.NullBool   `db:"student"`
+	ID                       int64          `db:"id"`
+	Name                     string         `db:"name"`
+	LeaderID                 sql.NullString `db:"leader_id"`
+	EmailAddress             string         `db:"email_address"`
+	InviteToken              string         `db:"invite_token"`
+	Withdrawn                bool           `db:"withdrawn"`
+	CreatedAt                time.Time      `db:"created_at"`
+	LastClarID               int64          `db:"last_clar_id"`
+	Student                  sql.NullBool   `db:"-"`
+	StudentVoid              sql.NullBool   `db:"student"`
+	BestScore                sql.NullInt64  `db:"best_score"`
+	BestScoreStartedAt       sql.NullTime   `db:"best_score_started_at"`
+	BestScoreMarkedAt        sql.NullTime   `db:"best_score_marked_at"`
+	LatestScore              sql.NullInt64  `db:"latest_score"`
+	LatestScoreStartedAt     sql.NullTime   `db:"latest_score_started_at"`
+	LatestScoreMarkedAt      sql.NullTime   `db:"latest_score_marked_at"`
+	FinishCount              sql.NullInt64  `db:"finish_count"`
+	RealBestScore            sql.NullInt64  `db:"real_best_score"`
+	RealBestScoreStartedAt   sql.NullTime   `db:"real_best_score_started_at"`
+	RealBestScoreMarkedAt    sql.NullTime   `db:"real_best_score_marked_at"`
+	RealLatestScore          sql.NullInt64  `db:"real_latest_score"`
+	RealLatestScoreStartedAt sql.NullTime   `db:"real_latest_score_started_at"`
+	RealLatestScoreMarkedAt  sql.NullTime   `db:"real_latest_score_marked_at"`
+	RealFinishCount          sql.NullInt64  `db:"real_finish_count"`
 }
 
 type JobResult struct {
@@ -96,18 +110,25 @@ type PushSubscription struct {
 }
 
 type LeaderBoardTeam struct {
-	ID                   int64          `db:"id"`
-	Name                 string         `db:"name"`
-	LeaderID             sql.NullString `db:"leader_id"`
-	Withdrawn            bool           `db:"withdrawn"`
-	Student              sql.NullBool   `db:"student"`
-	BestScore            sql.NullInt64  `db:"best_score"`
-	BestScoreStartedAt   sql.NullTime   `db:"best_score_started_at"`
-	BestScoreMarkedAt    sql.NullTime   `db:"best_score_marked_at"`
-	LatestScore          sql.NullInt64  `db:"latest_score"`
-	LatestScoreStartedAt sql.NullTime   `db:"latest_score_started_at"`
-	LatestScoreMarkedAt  sql.NullTime   `db:"latest_score_marked_at"`
-	FinishCount          sql.NullInt64  `db:"finish_count"`
+	ID                       int64          `db:"id"`
+	Name                     string         `db:"name"`
+	LeaderID                 sql.NullString `db:"leader_id"`
+	Withdrawn                bool           `db:"withdrawn"`
+	Student                  sql.NullBool   `db:"student"`
+	BestScore                sql.NullInt64  `db:"best_score"`
+	BestScoreStartedAt       sql.NullTime   `db:"best_score_started_at"`
+	BestScoreMarkedAt        sql.NullTime   `db:"best_score_marked_at"`
+	LatestScore              sql.NullInt64  `db:"latest_score"`
+	LatestScoreStartedAt     sql.NullTime   `db:"latest_score_started_at"`
+	LatestScoreMarkedAt      sql.NullTime   `db:"latest_score_marked_at"`
+	FinishCount              sql.NullInt64  `db:"finish_count"`
+	RealBestScore            sql.NullInt64  `db:"real_best_score"`
+	RealBestScoreStartedAt   sql.NullTime   `db:"real_best_score_started_at"`
+	RealBestScoreMarkedAt    sql.NullTime   `db:"real_best_score_marked_at"`
+	RealLatestScore          sql.NullInt64  `db:"real_latest_score"`
+	RealLatestScoreStartedAt sql.NullTime   `db:"real_latest_score_started_at"`
+	RealLatestScoreMarkedAt  sql.NullTime   `db:"real_latest_score_marked_at"`
+	RealFinishCount          sql.NullInt64  `db:"real_finish_count"`
 }
 
 func (t *LeaderBoardTeam) Team() *Team {

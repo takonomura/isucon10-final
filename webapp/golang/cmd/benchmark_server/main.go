@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -19,6 +20,7 @@ import (
 
 	xsuportal "github.com/isucon/isucon10-final/webapp/golang"
 	"github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/resources"
+	resourcespb "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/resources"
 	"github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/bench"
 	"github.com/isucon/isucon10-final/webapp/golang/util"
 )
@@ -183,7 +185,7 @@ func (b *benchmarkReportService) ReportBenchmarkResult(srv bench.BenchmarkReport
 	}
 }
 
-func (b *benchmarkReportService) saveAsFinished(db sqlx.Execer, job *xsuportal.BenchmarkJob, req *bench.ReportBenchmarkResultRequest) error {
+func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.BenchmarkJob, req *bench.ReportBenchmarkResultRequest) error {
 	if !job.StartedAt.Valid || job.FinishedAt.Valid {
 		return status.Errorf(codes.FailedPrecondition, "Job %v has already finished or has not started yet", req.JobId)
 	}
@@ -213,7 +215,94 @@ func (b *benchmarkReportService) saveAsFinished(db sqlx.Execer, job *xsuportal.B
 	if err != nil {
 		return fmt.Errorf("update benchmark job status: %w", err)
 	}
+	cs, err := getCurrentContestStatus(context.TODO(), db)
+	if err != nil {
+		return fmt.Errorf("get contest status: %w", err)
+	}
+	//if cs.ContestFreezesAt.After(markedAt) {
+	var team xsuportal.Team
+	err = db.Get(&team, "SELECT * FROM `teams` WHERE id = ? LIMIT 1", job.TeamID)
+	if err != nil {
+		return fmt.Errorf("querying team: %w", err)
+	}
+	score := raw.Int32 - deduction.Int32
+	sets := []string{
+		"`real_final_count` = `final_count` + 1",
+		"`real_latest_score` = ?",
+		"`real_latest_started_at` = ?",
+		"`real_latest_marked_at` = ?",
+	}
+	setArgs := []interface{}{
+		score,
+		job.StartedAt.Value,
+		markedAt,
+	}
+	if cs.ContestFreezesAt.After(markedAt) {
+		sets = append(sets,
+			"`final_count` = `final_count` + 1",
+			"`latest_score` = ?",
+			"`latest_started_at` = ?",
+			"`latest_marked_at` = ?",
+		)
+		setArgs = append(setArgs,
+			score,
+			job.StartedAt.Value,
+			markedAt,
+		)
+	}
+
+	if team.BestScore.Int64 <= int64(score) {
+		sets = append(sets,
+			"real_best_score = ?",
+			"real_best_started_at = ?",
+			"real_best_marked_at = ?",
+		)
+		setArgs = append(setArgs,
+			score,
+			job.StartedAt.Value,
+			markedAt,
+		)
+		if cs.ContestFreezesAt.After(markedAt) {
+			sets = append(sets,
+				"best_score = ?",
+				"best_started_at = ?",
+				"best_marked_at = ?",
+			)
+			setArgs = append(setArgs,
+				score,
+				job.StartedAt.Value,
+				markedAt,
+			)
+		}
+	}
+	setArgs = append(setArgs, team.ID)
+	_, err = db.Exec("UPDATE `teams` SET "+strings.Join(sets, ", ")+" WHERE `id` = ?", setArgs...)
+	if err != nil {
+		return fmt.Errorf("updating team stats: %w", err)
+	}
+	//}
+
 	return nil
+}
+func getCurrentContestStatus(ctx context.Context, db sqlx.QueryerContext) (*xsuportal.ContestStatus, error) {
+	var contestStatus xsuportal.ContestStatus
+	err := sqlx.GetContext(CleanContext(ctx), db, &contestStatus, "SELECT *, NOW(6) AS `current_time`, CASE WHEN NOW(6) < `registration_open_at` THEN 'standby' WHEN `registration_open_at` <= NOW(6) AND NOW(6) < `contest_starts_at` THEN 'registration' WHEN `contest_starts_at` <= NOW(6) AND NOW(6) < `contest_ends_at` THEN 'started' WHEN `contest_ends_at` <= NOW(6) THEN 'finished' ELSE 'unknown' END AS `status`, IF(`contest_starts_at` <= NOW(6) AND NOW(6) < `contest_freezes_at`, 1, 0) AS `frozen` FROM `contest_config`")
+	if err != nil {
+		return nil, fmt.Errorf("query contest status: %w", err)
+	}
+	switch contestStatus.StatusStr {
+	case "standby":
+		contestStatus.Status = resourcespb.Contest_STANDBY
+	case "registration":
+		contestStatus.Status = resourcespb.Contest_REGISTRATION
+	case "started":
+		contestStatus.Status = resourcespb.Contest_STARTED
+	case "finished":
+		contestStatus.Status = resourcespb.Contest_FINISHED
+	default:
+		return nil, fmt.Errorf("unexpected contest status: %q", contestStatus.StatusStr)
+	}
+	return &contestStatus, nil
 }
 
 func (b *benchmarkReportService) saveAsRunning(db sqlx.Execer, job *xsuportal.BenchmarkJob, req *bench.ReportBenchmarkResultRequest) error {

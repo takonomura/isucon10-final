@@ -56,56 +56,22 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `teams`.`leader_id` AS `leader_id`,\n" +
 		"  `teams`.`withdrawn` AS `withdrawn`,\n" +
 		"  `teams`.`student` AS `student`,\n" +
-		"  (`best_score_jobs`.`score_raw` - `best_score_jobs`.`score_deduction`) AS `best_score`,\n" +
-		"  `best_score_jobs`.`started_at` AS `best_score_started_at`,\n" +
-		"  `best_score_jobs`.`finished_at` AS `best_score_marked_at`,\n" +
-		"  (`latest_score_jobs`.`score_raw` - `latest_score_jobs`.`score_deduction`) AS `latest_score`,\n" +
-		"  `latest_score_jobs`.`started_at` AS `latest_score_started_at`,\n" +
-		"  `latest_score_jobs`.`finished_at` AS `latest_score_marked_at`,\n" +
-		"  `latest_score_job_ids`.`finish_count` AS `finish_count`\n" +
+		"  `teams`.`best_score` AS `best_score`,\n" +
+		"  `teams`.`best_started_at` AS `best_score_started_at`,\n" +
+		"  `teams`.`best_marked_at` AS `best_score_marked_at`,\n" +
+		"  `teams`.`latest_score` AS `latest_score`,\n" +
+		"  `teams`.`latest_started_at` AS `latest_score_started_at`,\n" +
+		"  `teams`.`latest_marked_at` AS `latest_score_marked_at`,\n" +
+		"  `teams`.`finish_count` AS `finish_count`,\n" +
+		"  `teams`.`real_best_score` AS `real_best_score`,\n" +
+		"  `teams`.`real_best_started_at` AS `real_best_score_started_at`,\n" +
+		"  `teams`.`real_best_marked_at` AS `real_best_score_marked_at`,\n" +
+		"  `teams`.`real_latest_score` AS `real_latest_score`,\n" +
+		"  `teams`.`real_latest_started_at` AS `real_latest_score_started_at`,\n" +
+		"  `teams`.`real_latest_marked_at` AS `real_latest_score_marked_at`,\n" +
+		"  `teams`.`real_finish_count` AS `real_finish_count`,\n" +
 		"FROM\n" +
 		"  `teams`\n" +
-		"  -- latest scores\n" +
-		"  LEFT JOIN (\n" +
-		"    SELECT\n" +
-		"      MAX(`id`) AS `id`,\n" +
-		"      `team_id`,\n" +
-		"      COUNT(*) AS `finish_count`\n" +
-		"    FROM\n" +
-		"      `benchmark_jobs`\n" +
-		"    WHERE\n" +
-		"      `finished_at` IS NOT NULL\n" +
-		"      -- score freeze\n" +
-		"      AND (`team_id` = ? OR (`team_id` != ? AND (? = TRUE OR `finished_at` < ?)))\n" +
-		"    GROUP BY\n" +
-		"      `team_id`\n" +
-		"  ) `latest_score_job_ids` ON `latest_score_job_ids`.`team_id` = `teams`.`id`\n" +
-		"  LEFT JOIN `benchmark_jobs` `latest_score_jobs` ON `latest_score_job_ids`.`id` = `latest_score_jobs`.`id`\n" +
-		"  -- best scores\n" +
-		"  LEFT JOIN (\n" +
-		"    SELECT\n" +
-		"      MAX(`j`.`id`) AS `id`,\n" +
-		"      `j`.`team_id` AS `team_id`\n" +
-		"    FROM\n" +
-		"      (\n" +
-		"        SELECT\n" +
-		"          `team_id`,\n" +
-		"          MAX(`score_raw` - `score_deduction`) AS `score`\n" +
-		"        FROM\n" +
-		"          `benchmark_jobs`\n" +
-		"        WHERE\n" +
-		"          `finished_at` IS NOT NULL\n" +
-		"          -- score freeze\n" +
-		"          AND (`team_id` = ? OR (`team_id` != ? AND (? = TRUE OR `finished_at` < ?)))\n" +
-		"        GROUP BY\n" +
-		"          `team_id`\n" +
-		"      ) `best_scores`\n" +
-		"      LEFT JOIN `benchmark_jobs` `j` ON (`j`.`score_raw` - `j`.`score_deduction`) = `best_scores`.`score`\n" +
-		"        AND `j`.`team_id` = `best_scores`.`team_id`\n" +
-		"    GROUP BY\n" +
-		"      `j`.`team_id`\n" +
-		"  ) `best_score_job_ids` ON `best_score_job_ids`.`team_id` = `teams`.`id`\n" +
-		"  LEFT JOIN `benchmark_jobs` `best_score_jobs` ON `best_score_jobs`.`id` = `best_score_job_ids`.`id`\n" +
 		"ORDER BY\n" +
 		"  `latest_score` DESC,\n" +
 		"  `latest_score_marked_at` ASC\n"
@@ -147,6 +113,39 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 	}
 	pb := &resourcespb.Leaderboard{}
 	for _, team := range leaderboard {
+		if team.ID == teamID || contestFinished {
+			team.FinishCount = team.RealFinishCount
+			team.BestScore = team.RealBestScore
+			team.LatestScore = team.RealLatestScore
+			//var finishCount int64
+			//err = tx.GetContext(CleanContext(e.Request().Context()), &finishCount, "SELECT COUNT(1) AS `count` FROM `benchmark_jobs` WHERE `team_id` = ?", teamID)
+			//if err != nil {
+			//        return nil, fmt.Errorf("getting self finish count: %w", err)
+			//}
+			//team.FinishCount.Int64 = finishCount
+			//var latest xsuportal.BenchmarkJob
+			//err = tx.GetContext(CleanContext(e.Request().Context()), &latest, "SELECT * FROM `benchmark_jobs` WHERE `team_id` = ? ORDER BY `id` DESC LIMIT 1", teamID)
+			//if err != nil {
+			//        return nil, fmt.Errorf("getting latest job: %w", err)
+			//}
+			//if latest.ScoreRaw.Valid {
+			//        team.LatestScore = sql.NullInt64{
+			//                Valid: true,
+			//                Int64: int64(latest.ScoreRaw.Int32 - latest.ScoreDeduction.Int32),
+			//        }
+			//}
+			//var best xsuportal.BenchmarkJob
+			//err = tx.GetContext(CleanContext(e.Request().Context()), &best, "SELECT * FROM `benchmark_jobs` WHERE `team_id` = ? ORDER BY `score_raw` - `score_deduction` DESC LIMIT 1", teamID)
+			//if err != nil {
+			//        return nil, fmt.Errorf("getting best job: %w", err)
+			//}
+			//if best.ScoreRaw.Valid {
+			//        team.LatestScore = sql.NullInt64{
+			//                Valid: true,
+			//                Int64: int64(best.ScoreRaw.Int32 - best.ScoreDeduction.Int32),
+			//        }
+			//}
+		}
 		t, _ := makeTeamPB(e.Request().Context(), db, team.Team(), false, false)
 		item := &resourcespb.Leaderboard_LeaderboardItem{
 			Scores: teamGraphScores[team.ID],
