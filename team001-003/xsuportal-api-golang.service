@@ -1,0 +1,13 @@
+[Unit]
+Description=xsuportal-api-golang
+After=network.target mysql.service
+
+[Service]
+User=isucon
+ExecStart=/home/isucon/.x /home/isucon/webapp/golang/bin/benchmark_server
+WorkingDirectory=/home/isucon/webapp/golang
+EnvironmentFile=/home/isucon/env
+
+
+[Install]
+WantedBy=multi-user.target
