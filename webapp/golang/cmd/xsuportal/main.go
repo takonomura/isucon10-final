@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -236,10 +237,31 @@ func (*AdminService) ListClarifications(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("query teams: %w", err)
 	}
+	var contestants []xsuportal.Contestant
+	query, args, err = sqlx.In("SELECT * FROM `contestants` WHERE `team_id` IN (?)", teamIDs)
+	if err != nil {
+		return fmt.Errorf("creating get teams query: %w", err)
+	}
+	err = db.SelectContext(CleanContext(e.Request().Context()), &contestants, query, args...)
+	if err != nil {
+		return fmt.Errorf("query teams: %w", err)
+	}
+	contestantByTeam := make(map[int64][]xsuportal.Contestant, len(teams))
+	for _, c := range contestants {
+		s := contestantByTeam[c.TeamID.Int64]
+		s = append(s, c)
+		contestantByTeam[c.TeamID.Int64] = s
+	}
+	for t, s := range contestantByTeam {
+		sort.Slice(s, func(i, j int) bool {
+			return s[i].CreatedAt.Before(s[j].CreatedAt)
+		})
+		contestantByTeam[t] = s
+	}
 	for _, clarification := range clarifications {
 		for _, t := range teams {
 			if t.ID == clarification.TeamID {
-				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t)
+				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t, contestantByTeam[t.ID])
 				if err != nil {
 					return fmt.Errorf("make clarification: %w", err)
 				}
@@ -543,10 +565,31 @@ func (*ContestantService) ListClarifications(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("query teams: %w", err)
 	}
+	var contestants []xsuportal.Contestant
+	query, args, err = sqlx.In("SELECT * FROM `contestants` WHERE `team_id` IN (?)", teamIDs)
+	if err != nil {
+		return fmt.Errorf("creating get teams query: %w", err)
+	}
+	err = db.SelectContext(CleanContext(e.Request().Context()), &contestants, query, args...)
+	if err != nil {
+		return fmt.Errorf("query teams: %w", err)
+	}
+	contestantByTeam := make(map[int64][]xsuportal.Contestant, len(teams))
+	for _, c := range contestants {
+		s := contestantByTeam[c.TeamID.Int64]
+		s = append(s, c)
+		contestantByTeam[c.TeamID.Int64] = s
+	}
+	for t, s := range contestantByTeam {
+		sort.Slice(s, func(i, j int) bool {
+			return s[i].CreatedAt.Before(s[j].CreatedAt)
+		})
+		contestantByTeam[t] = s
+	}
 	for _, clarification := range clarifications {
 		for _, t := range teams {
 			if t.ID == clarification.TeamID {
-				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t)
+				c, err := makeClarificationPB(e.Request().Context(), db, &clarification, &t, contestantByTeam[t.ID])
 				if err != nil {
 					return fmt.Errorf("make clarification: %w", err)
 				}
@@ -1360,10 +1403,18 @@ func halt(e echo.Context, code int, humanMessage string, err error) error {
 	return e.Blob(code, "application/vnd.google.protobuf; proto=xsuportal.proto.Error", res)
 }
 
-func makeClarificationPB(ctx context.Context, db sqlx.QueryerContext, c *xsuportal.Clarification, t *xsuportal.Team) (*resourcespb.Clarification, error) {
-	team, err := makeTeamPB(ctx, db, t, false, true)
+func makeClarificationPB(ctx context.Context, db sqlx.QueryerContext, c *xsuportal.Clarification, t *xsuportal.Team, cs []xsuportal.Contestant) (*resourcespb.Clarification, error) {
+	team, err := makeTeamPB(ctx, db, t, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("make team: %w", err)
+	}
+	for _, m := range cs {
+		m := m
+		if m.ID == team.LeaderId {
+			team.Leader = makeContestantPB(&m)
+		}
+		team.Members = append(team.Members, makeContestantPB(&m))
+		team.MemberIds = append(team.MemberIds, m.ID)
 	}
 	pb := &resourcespb.Clarification{
 		Id:        c.ID,
