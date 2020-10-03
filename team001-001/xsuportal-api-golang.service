@@ -1,6 +1,6 @@
 [Unit]
 Description=xsuportal-api-golang
-After=network.target mysql.service
+After=network.target
 
 [Service]
 User=isucon
