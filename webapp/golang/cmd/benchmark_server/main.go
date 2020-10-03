@@ -251,7 +251,7 @@ func (b *benchmarkReportService) saveAsFinished(db *sqlx.Tx, job *xsuportal.Benc
 		)
 	}
 
-	if team.BestScore.Int64 <= int64(score) {
+	if team.RealBestScore.Int64 <= int64(score) {
 		sets = append(sets,
 			"real_best_score = ?",
 			"real_best_score_started_at = ?",
