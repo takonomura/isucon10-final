@@ -90,7 +90,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		if leaderboard[i].LatestScore.Int64 == leaderboard[j].LatestScore.Int64 {
 			return leaderboard[i].LatestScoreMarkedAt.Time.After(leaderboard[j].LatestScoreMarkedAt.Time)
 		}
-		return leaderboard[i].LatestScore.Int64 < leaderboard[j].LatestScore.Int64
+		return leaderboard[i].LatestScore.Int64 > leaderboard[j].LatestScore.Int64
 	})
 	jobResultsQuery := "SELECT\n" +
 		"  `team_id` AS `team_id`,\n" +
