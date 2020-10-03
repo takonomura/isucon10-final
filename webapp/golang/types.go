@@ -26,6 +26,7 @@ type Team struct {
 	Withdrawn    bool           `db:"withdrawn"`
 	CreatedAt    time.Time      `db:"created_at"`
 	Student      sql.NullBool   `db:"-"`
+	LastClarID   int64          `db:"last_clar_id"`
 }
 
 type JobResult struct {
