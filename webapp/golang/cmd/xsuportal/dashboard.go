@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -18,10 +17,10 @@ import (
 var (
 	lbCacheMutex  = new(sync.Mutex)
 	lbCacheExpire time.Time
-	lbCacheData   []byte
+	lbCacheData   *resourcespb.Leaderboard
 )
 
-func getCachedLeaderboard(e echo.Context) ([]byte, error) {
+func getCachedLeaderboard(e echo.Context) (*resourcespb.Leaderboard, error) {
 	now := time.Now()
 	lbCacheMutex.Lock()
 	defer lbCacheMutex.Unlock()
@@ -30,12 +29,11 @@ func getCachedLeaderboard(e echo.Context) ([]byte, error) {
 	}
 	var err error
 	lbCacheExpire = time.Now().Add(time.Second)
-	m, err := makeLeaderboardPB(e, 0)
+	lbCacheData, err = makeLeaderboardPB(e, 0)
 	if err != nil {
 		lbCacheExpire = time.Time{}
 		return nil, err
 	}
-	lbCacheData, _ := proto.Marshal(m)
 	return lbCacheData, nil
 }
 
