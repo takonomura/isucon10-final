@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	TeamCapacity               = 130
+	TeamCapacity               = 120
 	AdminID                    = "admin"
 	AdminPassword              = "admin"
 	DebugContestStatusFilePath = "/tmp/XSUPORTAL_CONTEST_STATUS"
