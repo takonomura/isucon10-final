@@ -47,6 +47,10 @@ const (
 var db *sqlx.DB
 var notifier xsuportal.Notifier
 
+func CleanContext(ctx context.Context) context.Context {
+	return context.Background()
+}
+
 func main() {
 	srv := echo.New()
 	srv.Debug = util.GetEnv("DEBUG", "") != ""

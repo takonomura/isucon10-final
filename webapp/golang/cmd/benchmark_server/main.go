@@ -24,6 +24,10 @@ import (
 
 var db *sqlx.DB
 
+func CleanContext(ctx context.Context) context.Context {
+	return context.Background()
+}
+
 type benchmarkQueueService struct {
 }
 

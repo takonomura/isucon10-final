@@ -30,6 +30,10 @@ const (
 	WebpushSubject = "xsuportal-debug@example.com"
 )
 
+func CleanContext(ctx context.Context) context.Context {
+	return context.Background()
+}
+
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("send_web_push: ")
