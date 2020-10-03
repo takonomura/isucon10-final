@@ -217,6 +217,9 @@ func (*AdminService) ListClarifications(e echo.Context) error {
 		return fmt.Errorf("query clarifications: %w", err)
 	}
 	res := &adminpb.ListClarificationsResponse{}
+	if len(clarifications) == 0 {
+		return writeProto(e, http.StatusOK, res)
+	}
 	var teamIDs []int64
 	teamIDuniq := make(map[int64]struct{})
 	for _, clarification := range clarifications {
@@ -521,6 +524,9 @@ func (*ContestantService) ListClarifications(e echo.Context) error {
 		return fmt.Errorf("select clarifications: %w", err)
 	}
 	res := &contestantpb.ListClarificationsResponse{}
+	if len(clarifications) == 0 {
+		return writeProto(e, http.StatusOK, res)
+	}
 	var teamIDs []int64
 	teamIDuniq := make(map[int64]struct{})
 	for _, clarification := range clarifications {
