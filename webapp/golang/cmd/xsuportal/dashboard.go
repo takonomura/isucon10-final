@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -71,14 +72,26 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `teams`.`real_latest_score_marked_at` AS `real_latest_score_marked_at`,\n" +
 		"  `teams`.`real_finish_count` AS `real_finish_count`\n" +
 		"FROM\n" +
-		"  `teams`\n" +
-		"ORDER BY\n" +
-		"  `latest_score` DESC,\n" +
-		"  `latest_score_marked_at` ASC\n"
+		"  `teams`\n"
 	err = tx.SelectContext(CleanContext(e.Request().Context()), &leaderboard, query)
 	if err != sql.ErrNoRows && err != nil {
 		return nil, fmt.Errorf("select leaderboard: %w", err)
 	}
+	for i, team := range leaderboard {
+		if team.ID == teamID || contestFinished {
+			team.FinishCount = team.RealFinishCount
+			team.BestScore = team.RealBestScore
+			team.LatestScore = team.RealLatestScore
+			leaderboard[i] = team
+		}
+	}
+
+	sort.Slice(leaderboard, func(i, j int) bool {
+		if leaderboard[i].LatestScore.Int64 == leaderboard[j].LatestScore.Int64 {
+			return leaderboard[i].LatestScoreMarkedAt.Time.After(leaderboard[j].LatestScoreMarkedAt.Time)
+		}
+		return leaderboard[i].LatestScore.Int64 < leaderboard[j].LatestScore.Int64
+	})
 	jobResultsQuery := "SELECT\n" +
 		"  `team_id` AS `team_id`,\n" +
 		"  (`score_raw` - `score_deduction`) AS `score`,\n" +
@@ -113,39 +126,6 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 	}
 	pb := &resourcespb.Leaderboard{}
 	for _, team := range leaderboard {
-		if team.ID == teamID || contestFinished {
-			team.FinishCount = team.RealFinishCount
-			team.BestScore = team.RealBestScore
-			team.LatestScore = team.RealLatestScore
-			//var finishCount int64
-			//err = tx.GetContext(CleanContext(e.Request().Context()), &finishCount, "SELECT COUNT(1) AS `count` FROM `benchmark_jobs` WHERE `team_id` = ?", teamID)
-			//if err != nil {
-			//        return nil, fmt.Errorf("getting self finish count: %w", err)
-			//}
-			//team.FinishCount.Int64 = finishCount
-			//var latest xsuportal.BenchmarkJob
-			//err = tx.GetContext(CleanContext(e.Request().Context()), &latest, "SELECT * FROM `benchmark_jobs` WHERE `team_id` = ? ORDER BY `id` DESC LIMIT 1", teamID)
-			//if err != nil {
-			//        return nil, fmt.Errorf("getting latest job: %w", err)
-			//}
-			//if latest.ScoreRaw.Valid {
-			//        team.LatestScore = sql.NullInt64{
-			//                Valid: true,
-			//                Int64: int64(latest.ScoreRaw.Int32 - latest.ScoreDeduction.Int32),
-			//        }
-			//}
-			//var best xsuportal.BenchmarkJob
-			//err = tx.GetContext(CleanContext(e.Request().Context()), &best, "SELECT * FROM `benchmark_jobs` WHERE `team_id` = ? ORDER BY `score_raw` - `score_deduction` DESC LIMIT 1", teamID)
-			//if err != nil {
-			//        return nil, fmt.Errorf("getting best job: %w", err)
-			//}
-			//if best.ScoreRaw.Valid {
-			//        team.LatestScore = sql.NullInt64{
-			//                Valid: true,
-			//                Int64: int64(best.ScoreRaw.Int32 - best.ScoreDeduction.Int32),
-			//        }
-			//}
-		}
 		t, _ := makeTeamPB(e.Request().Context(), db, team.Team(), false, false)
 		item := &resourcespb.Leaderboard_LeaderboardItem{
 			Scores: teamGraphScores[team.ID],
