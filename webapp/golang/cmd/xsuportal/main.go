@@ -72,7 +72,6 @@ func main() {
 	db.SetMaxOpenConns(10)
 
 	srv.Use(echo.WrapMiddleware(xsuportal.WithTrace))
-	srv.Use(middleware.Logger())
 	srv.Use(middleware.Recover())
 	srv.Use(session.Middleware(sessions.NewCookieStore([]byte("tagomoris"))))
 
